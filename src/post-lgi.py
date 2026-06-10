@@ -40,4 +40,11 @@ curvfile_names = [f.name for f in curv_files if f.is_file()]
 # Extract the participant kernel sizes and sort
 kernels = sorted([int(n.split('.')[4]) for n in curvfile_names])
 
+# Reference kernel sizes
 ref_kernels = [316, 632, 948, 1264]
+
+# FIXME
+# Let's run mri_surf2surf via subprocess. In our freesurfer container,
+# the env should already be in place, we'll only need SUBJECTS_DIR I
+# think
+
