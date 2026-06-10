@@ -20,4 +20,5 @@ convert_lgi.py --lgi_dir "${lgi_dir}"
 
 # Resample to fsaverage grid, correctly renaming to ref space kernel size
 
-
+# Make a csv for kernel size info
+#  participant_size,ref_size
