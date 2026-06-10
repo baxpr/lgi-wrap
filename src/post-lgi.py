@@ -15,7 +15,10 @@
 import argparse
 import nibabel
 import numpy
+import os
+import subprocess
 from pathlib import Path
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--lgi_dir', required=True)
@@ -47,4 +50,40 @@ ref_kernels = [316, 632, 948, 1264]
 # Let's run mri_surf2surf via subprocess. In our freesurfer container,
 # the env should already be in place, we'll only need SUBJECTS_DIR I
 # think
+
+# DRAFT below here
+
+def surf2surf(
+    subjects_dir,
+    srcsubject,
+    trgsubject,
+    hemi,
+    srcval,      # e.g. "thickness" or a path to a .mgh/.mgz
+    trgval,      # output file path
+    fwhm=None,   # optional smoothing
+    env=None,
+):
+    subjects_dir = str(subjects_dir)
+    trgval = str(trgval)
+
+    # Inherit your shell environment where FreeSurfer is already sourced,
+    # but ensure SUBJECTS_DIR is set.
+    run_env = os.environ.copy()
+    if env:
+        run_env.update(env)
+    run_env["SUBJECTS_DIR"] = subjects_dir
+
+    cmd = [
+        "mri_surf2surf",
+        "--srcsubject", srcsubject,
+        "--trgsubject", trgsubject,
+        "--hemi", hemi,
+        "--sval", srcval,      # per-vertex data name or file
+        "--tval", trgval,
+    ]
+    if fwhm is not None:
+        cmd += ["--fwhm", str(fwhm)]
+
+    subprocess.run(cmd, env=run_env, check=True)
+    return Path(trgval)
 
