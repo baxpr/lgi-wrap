@@ -56,25 +56,28 @@ kernel_info = pandas.DataFrame({
     })
 kernel_info.to_csv(os.path.join(args.out_dir, 'kernel_info.csv'), index=False)
 
-# Run mri_surf2surf via subprocess to resample to fsaverage mesh
+# Grab freesurfer env and set subjects dir
 run_env = os.environ.copy()
 run_env["SUBJECTS_DIR"] = args.subjects_dir
 
+# Link fsaverage files to subjects dir
 cmd = [
-    'ln',
-    '-s',
+    'ln', '-s',
     '$FREESURFER_HOME/subjects/fsaverage',
     '$SUBJECTS_DIR/fsaverage',
     ]
 subprocess.run(cmd, env=run_env, check=True)
 
-for hemi in ['lh', 'rh']:
-    cmd = [
-        f'mri_surf2surf',
-        f'--srcsubject {args.subject_dir}',
-        f'--trgsubject fsaverage',
-        f'--hemi {hemi}',
-        f'--sval "$SUBJECTS_DIR/surf/{hemi}.pial_lgi"',
-        f'--tval {out_dir}/{hemi}.lgi.fsaverage.mgh"',
-        ]
-    subprocess.run(cmd, env=run_env, check=True)
+# Resample LGI surfaces for each kernel and hemisphere
+for row in kernel_info.itertuples():
+    for hemi in ['lh', 'rh']:
+        cmd = [
+            'mri_surf2surf',
+            '--srcsubject', f'{args.subject_dir}',
+            '--trgsubject', 'fsaverage',
+            '--hemi', f'{hemi}',
+            '--sval', f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.subject_kernel}.curv',
+            '--tval', f'{args.out_dir}/{hemi}.pial.lgi.fsaverage.{row.reference_kernel}.mgh',
+            ]
+        subprocess.run(cmd, env=run_env, check=True)
+
