@@ -16,12 +16,16 @@ import argparse
 import nibabel
 import numpy
 import os
+import pandas
 import subprocess
 from pathlib import Path
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--lgi_dir', required=True)
+parser.add_argument('--subject_dir', required=True)
+parser.add_argument('--subjects_dir', required=True)
+parser.add_argument('--out_dir', required=True)
 args = parser.parse_args()
 
 # Find {lh,rh}.pial.lgi.map.{kernel}.txt files
@@ -43,47 +47,34 @@ curvfile_names = [f.name for f in curv_files if f.is_file()]
 # Extract the participant kernel sizes and sort
 kernels = sorted([int(n.split('.')[4]) for n in curvfile_names])
 
-# Reference kernel sizes
+# Reference kernel sizes, hard coded
 ref_kernels = [316, 632, 948, 1264]
 
-# FIXME
-# Let's run mri_surf2surf via subprocess. In our freesurfer container,
-# the env should already be in place, we'll only need SUBJECTS_DIR I
-# think
+kernel_info = pandas.DataFrame({
+    'subject_kernel': kernels,
+    'reference_kernel': ref_kernels,
+    })
+kernel_info.to_csv(os.path.join(args.out_dir, 'kernel_info.csv'), index=False)
 
-# DRAFT below here
+# Run mri_surf2surf via subprocess to resample to fsaverage mesh
+run_env = os.environ.copy()
+run_env["SUBJECTS_DIR"] = args.subjects_dir
 
-def surf2surf(
-    subjects_dir,
-    srcsubject,
-    trgsubject,
-    hemi,
-    srcval,      # e.g. "thickness" or a path to a .mgh/.mgz
-    trgval,      # output file path
-    fwhm=None,   # optional smoothing
-    env=None,
-):
-    subjects_dir = str(subjects_dir)
-    trgval = str(trgval)
-
-    # Inherit your shell environment where FreeSurfer is already sourced,
-    # but ensure SUBJECTS_DIR is set.
-    run_env = os.environ.copy()
-    if env:
-        run_env.update(env)
-    run_env["SUBJECTS_DIR"] = subjects_dir
-
-    cmd = [
-        "mri_surf2surf",
-        "--srcsubject", srcsubject,
-        "--trgsubject", trgsubject,
-        "--hemi", hemi,
-        "--sval", srcval,      # per-vertex data name or file
-        "--tval", trgval,
+cmd = [
+    'ln',
+    '-s',
+    '$FREESURFER_HOME/subjects/fsaverage',
+    '$SUBJECTS_DIR/fsaverage',
     ]
-    if fwhm is not None:
-        cmd += ["--fwhm", str(fwhm)]
+subprocess.run(cmd, env=run_env, check=True)
 
+for hemi in ['lh', 'rh']:
+    cmd = [
+        f'mri_surf2surf',
+        f'--srcsubject {args.subject_dir}',
+        f'--trgsubject fsaverage',
+        f'--hemi {hemi}',
+        f'--sval "$SUBJECTS_DIR/surf/{hemi}.pial_lgi"',
+        f'--tval {out_dir}/{hemi}.lgi.fsaverage.mgh"',
+        ]
     subprocess.run(cmd, env=run_env, check=True)
-    return Path(trgval)
-
