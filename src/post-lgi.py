@@ -61,12 +61,8 @@ run_env = os.environ.copy()
 run_env["SUBJECTS_DIR"] = args.subjects_dir
 
 # Link fsaverage files to subjects dir
-cmd = [
-    'ln', '-s',
-    '$FREESURFER_HOME/subjects/fsaverage',
-    '$SUBJECTS_DIR/fsaverage',
-    ]
-subprocess.run(cmd, env=run_env, check=True)
+cmd = 'ln -fs $FREESURFER_HOME/subjects/fsaverage $SUBJECTS_DIR/fsaverage'
+subprocess.run(cmd, env=run_env, shell=True, check=True)
 
 # Resample LGI surfaces for each kernel and hemisphere
 for row in kernel_info.itertuples():
@@ -76,7 +72,8 @@ for row in kernel_info.itertuples():
             '--srcsubject', f'{args.subject_dir}',
             '--trgsubject', 'fsaverage',
             '--hemi', f'{hemi}',
-            '--sval', f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.subject_kernel}.curv',
+            '--srcsurfval', f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.subject_kernel}.curv',
+            '--src_type', 'curv',
             '--tval', f'{args.out_dir}/{hemi}.pial.lgi.fsaverage.{row.reference_kernel}.mgh',
             ]
         subprocess.run(cmd, env=run_env, check=True)
