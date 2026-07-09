@@ -82,14 +82,14 @@ for hemi in ['lh', 'rh']:
             '--hemi', f'{hemi}',
             '--srcsurfval', f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.klist}.curv',
             '--src_type', 'curv',
-            '--tval', f'{args.lgi_dir}/{hemi}.pial.lgi.fsaverage.{row.reference_kernel}.mgh',
+            '--tval', f'{args.lgi_dir}/{hemi}.pial.lgi.fsaverage.{row.reference_kernel:04d}.mgh',
             ]
         subprocess.run(cmd, env=run_env, check=True)
 
         # Rename files to be friendly for VertexWiseR
         shutil.copy(
             f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.klist}.curv',
-            f'{args.lgi_dir}/{hemi}.pial.lgi.map.ref{row.reference_kernel}',
+            f'{args.lgi_dir}/{hemi}.pial.lgi.map.ref{row.reference_kernel:04d}',
             )
 
 # Save kernel info
