@@ -17,6 +17,7 @@ import nibabel
 import numpy
 import os
 import pandas
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -25,7 +26,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--lgi_dir', required=True)
 parser.add_argument('--subject_dir', required=True)
 parser.add_argument('--subjects_dir', required=True)
-parser.add_argument('--out_dir', required=True)
 args = parser.parse_args()
 
 # Reference kernel sizes, hard coded
@@ -70,9 +70,11 @@ for hemi in ['lh', 'rh']:
         kernels[f'{hemi}_subject_kernel'] = klist
         kernels['klist'] = klist
 
-    # Resample LGI surfaces for each kernel
+    # Make additional outputs for each kernel
     for row in kernels.itertuples():
         print(row)
+        
+        # Resample LGI surfaces to fsaverage mesh
         cmd = [
             'mri_surf2surf',
             '--srcsubject', f'{args.subject_dir}',
@@ -80,10 +82,16 @@ for hemi in ['lh', 'rh']:
             '--hemi', f'{hemi}',
             '--srcsurfval', f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.klist}.curv',
             '--src_type', 'curv',
-            '--tval', f'{args.out_dir}/{hemi}.pial.lgi.fsaverage.{row.reference_kernel}.mgh',
+            '--tval', f'{args.lgi_dir}/{hemi}.pial.lgi.fsaverage.{row.reference_kernel}.mgh',
             ]
         subprocess.run(cmd, env=run_env, check=True)
 
+        # Rename files to be friendly for VertexWiseR
+        shutil.copy(
+            f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.klist}.curv',
+            f'{args.lgi_dir}/{hemi}.pial.lgi.map.ref{row.reference_kernel}',
+            )
+
 # Save kernel info
 kernels.drop('klist', axis=1, inplace=True)
-kernels.to_csv(os.path.join(args.out_dir, 'kernel_info.csv'), index=False)
+kernels.to_csv(os.path.join(args.lgi_dir, 'kernel_info.csv'), index=False)
