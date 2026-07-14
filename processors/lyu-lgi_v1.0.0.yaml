@@ -48,7 +48,7 @@ pre:
   args: >-
     bash -c '
     cd /OUTPUTS &&
-    curl -o lgi-wrap.tar.gz -L https://github.com/baxpr/lgiwrap/archive/refs/tags/v1.0.0.tar.gz &&
+    curl -o lgi-wrap.tar.gz -L https://github.com/baxpr/lgi-wrap/archive/refs/tags/v1.0.0.tar.gz &&
     tar -zxf lgi-wrap.tar.gz &&
     mv lgi-wrap-* lgi-wrap &&
     export PATH=/INPUTS/lgi-wrap/src:\$PATH &&
