@@ -2,4 +2,85 @@
 # pre with fs container
 # command with cmorph container
 # post with fs container
+---
+procyamlversion: 3.0.0-dev.0
+description: LGI - github.com/ilwoolyu/LocalGyrificationIndex
 
+jobtemplate: job_template_v3.txt
+
+containers:
+  - name: freesurfer
+    path: freesurfer800-iis_v2.1.0.sif
+    source: docker://baxterprogers/freesurfer800-iis:v2.1.0
+  - name: cmorph
+    path: cmorph_1.7.sif
+    source: docker://ilwoolyu/cmorph:1.7
+
+requirements:
+  walltime: 1-0
+  memory: 20G
+  
+inputs:
+  xnat:
+
+    filters:
+      - type: match
+        inputs: scan_t1,assr_fs/scan_t1
+
+    scans:
+      - name: scan_t1
+        types: T1W_3D_TFE_new
+
+    assessors:
+      - name: assr_fs
+        proctypes: freesurfer800_v2
+        resources:
+          - {resource: SUBJECT, ftype: DIR, fdest: freesurfer}
+
+outputs:
+  - {path: lgi-wrap, type: DIR, resource: SCRIPTS}
+  - {path: '.', type: DIR, resource: all_outputs}
+
+
+pre:
+  type: singularity_exec
+  container: freesurfer
+  args: >-
+    bash -c '
+    cd /OUTPUTS &&
+    curl -o lgi-wrap.tar.gz -L https://github.com/baxpr/lgiwrap/archive/refs/tags/v1.0.0.tar.gz &&
+    tar -zxf lgi-wrap.tar.gz &&
+    mv lgi-wrap-* lgi-wrap &&
+    export PATH=/INPUTS/lgi-wrap/src:\$PATH &&
+    mkdir /OUTPUTS/lgi &&
+    pre-lgi.sh
+      --fs_dir /INPUTS/freesurfer/SUBJECT
+      --out_dir /OUTPUTS/lgi
+    '
+
+command:
+  type: singularity_exec
+  container: cmorph
+  args: >-
+    bash -c '
+    cd /OUTPUTS/lgi &&
+    export LANG=C.UTF-8 &&
+    export LC_ALL=C.UTF-8 &&
+    lgi -i lh.pial.vtk --white lh.white.vtk --ref 77100 --kernel 1264 --intv 316 &&
+    lgi -i rh.pial.vtk --white rh.white.vtk --ref 77100 --kernel 1264 --intv 316
+    '
+
+post:
+  type: singularity_exec
+  container: freesurfer
+  args: >-
+    bash -c '
+    export PATH=/INPUTS/lgi-wrap/src:\$PATH &&
+    post-lgi.py
+    --lgi_dir /OUTPUTS/lgi
+    --subject_dir /INPUTS/freesurfer/SUBJECT
+    --subjects_dir /INPUTS/freesurfer
+    &&
+    mkdir -p /OUTPUTS/SUBJECT/surf &&
+    mv /OUTPUTS/lgi/?h.pial.lgi.map.ref* /OUTPUTS/SUBJECT/surf
+    '
