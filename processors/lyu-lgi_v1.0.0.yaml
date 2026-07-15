@@ -51,7 +51,7 @@ pre:
     curl -o lgi-wrap.tar.gz -L https://github.com/baxpr/lgi-wrap/archive/refs/tags/v1.0.0.tar.gz &&
     tar -zxf lgi-wrap.tar.gz &&
     mv lgi-wrap-* lgi-wrap &&
-    export PATH=/INPUTS/lgi-wrap/src:\$PATH &&
+    export PATH=/OUTPUTS/lgi-wrap/src:\$PATH &&
     mkdir /OUTPUTS/lgi &&
     pre-lgi.sh
       --fs_dir /INPUTS/freesurfer/SUBJECT
@@ -75,7 +75,7 @@ post:
   container: freesurfer
   args: >-
     bash -c '
-    export PATH=/INPUTS/lgi-wrap/src:\$PATH &&
+    export PATH=/OUTPUTS/lgi-wrap/src:\$PATH &&
     post-lgi.py
     --lgi_dir /OUTPUTS/lgi
     --subject_dir /INPUTS/freesurfer/SUBJECT
