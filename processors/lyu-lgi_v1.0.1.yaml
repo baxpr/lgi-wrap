@@ -1,7 +1,3 @@
-# scripts via git download
-# pre with fs container
-# command with cmorph container
-# post with fs container
 ---
 procyamlversion: 3.0.0-dev.0
 description: LGI - github.com/ilwoolyu/LocalGyrificationIndex
@@ -39,7 +35,8 @@ inputs:
 
 outputs:
   - {path: lgi-wrap, type: DIR, resource: SCRIPTS}
-  - {path: '.', type: DIR, resource: all_outputs}
+  - {path: lgi, type: DIR, resource: WORKFILES}
+  - {path: SUBJECT, type: DIR, resource: SUBJECT_LGI}
 
 
 pre:
@@ -49,11 +46,11 @@ pre:
   args: >-
     bash -c '
     cd /OUTPUTS &&
-    curl -o lgi-wrap.tar.gz -L https://github.com/baxpr/lgi-wrap/archive/refs/tags/v1.0.0.tar.gz &&
+    curl -o lgi-wrap.tar.gz -L https://github.com/baxpr/lgi-wrap/archive/refs/tags/v1.0.1.tar.gz &&
     tar -zxf lgi-wrap.tar.gz &&
+    rm lgi-wrap.tar.gz &&
     mv lgi-wrap-* lgi-wrap &&
     export PATH=/OUTPUTS/lgi-wrap/src:\$PATH &&
-    mkdir /OUTPUTS/lgi &&
     pre-lgi.sh
       --fs_dir /INPUTS/freesurfer/SUBJECT
       --out_dir /OUTPUTS/lgi
@@ -80,9 +77,6 @@ post:
     export PATH=/OUTPUTS/lgi-wrap/src:\$PATH &&
     post-lgi.py
     --lgi_dir /OUTPUTS/lgi
-    --subject_dir /INPUTS/freesurfer/SUBJECT
-    --subjects_dir /INPUTS/freesurfer
-    &&
-    mkdir -p /OUTPUTS/SUBJECT/surf &&
-    mv /OUTPUTS/lgi/?h.pial.lgi.map.ref* /OUTPUTS/SUBJECT/surf
+    --in_subject_dir /INPUTS/freesurfer/SUBJECT
+    --out_subject_dir /OUTPUTS/SUBJECT
     '

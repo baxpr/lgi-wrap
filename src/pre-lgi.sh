@@ -18,6 +18,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+mkdir -p "${out_dir}"
+
 mris_convert "${fs_dir}"/surf/lh.pial "${out_dir}"/lh.pial.vtk
 mris_convert "${fs_dir}"/surf/lh.white "${out_dir}"/lh.white.vtk
 mris_convert "${fs_dir}"/surf/rh.pial "${out_dir}"/rh.pial.vtk

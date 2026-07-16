@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # NOTE: Default reference space kernel sizes of 316 / 632 / 948 / 1264 are 
 # assumed and hard-coded in the output filenames. Corresponding options for 
@@ -24,16 +24,21 @@ from pathlib import Path
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--lgi_dir', required=True)
-parser.add_argument('--subject_dir', required=True)
-parser.add_argument('--subjects_dir', required=True)
+parser.add_argument('--in_subject_dir', required=True)
+parser.add_argument('--out_subject_dir', required=True)
 args = parser.parse_args()
 
 # Reference kernel sizes, hard coded
 ref_kernels = [316, 632, 948, 1264]
 
 # Grab freesurfer env and set subjects dir
+subjects_dir = os.path.dirname(args.in_subject_dir)
 run_env = os.environ.copy()
 run_env["SUBJECTS_DIR"] = args.subjects_dir
+
+# Create output subject dir structure
+out_surf_dir = os.path.join(args.out_subject_dir, 'surf')
+os.makedirs(out_surf_dir, exist_ok=True)
 
 # Link fsaverage files to subjects dir
 cmd = 'ln -fs $FREESURFER_HOME/subjects/fsaverage $SUBJECTS_DIR/fsaverage'
@@ -77,7 +82,7 @@ for hemi in ['lh', 'rh']:
         # Resample LGI surfaces to fsaverage mesh
         cmd = [
             'mri_surf2surf',
-            '--srcsubject', f'{args.subject_dir}',
+            '--srcsubject', f'{args.in_subject_dir}',
             '--trgsubject', 'fsaverage',
             '--hemi', f'{hemi}',
             '--srcsurfval', f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.klist}.curv',
@@ -89,9 +94,9 @@ for hemi in ['lh', 'rh']:
         # Rename files to be friendly for VertexWiseR
         shutil.copy(
             f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.klist}.curv',
-            f'{args.lgi_dir}/{hemi}.pial.lgi.map.ref{row.reference_kernel:04d}',
+            f'{out_surf_dir}/{hemi}.pial.lgi.map.ref{row.reference_kernel:04d}',
             )
 
 # Save kernel info
 kernels.drop('klist', axis=1, inplace=True)
-kernels.to_csv(os.path.join(args.lgi_dir, 'kernel_info.csv'), index=False)
+kernels.to_csv(os.path.join(args.lgi_dir, 'lyu_lgi_kernel_info.csv'), index=False)
