@@ -34,7 +34,7 @@ ref_kernels = [316, 632, 948, 1264]
 # Grab freesurfer env and set subjects dir
 subjects_dir = os.path.dirname(args.in_subject_dir)
 run_env = os.environ.copy()
-run_env["SUBJECTS_DIR"] = args.subjects_dir
+run_env["SUBJECTS_DIR"] = subjects_dir
 
 # Create output subject dir structure
 out_surf_dir = os.path.join(args.out_subject_dir, 'surf')
