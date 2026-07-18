@@ -33,6 +33,7 @@ ref_kernels = [316, 632, 948, 1264]
 
 # Grab freesurfer env and set subjects dir
 subjects_dir = os.path.dirname(args.in_subject_dir)
+subject_dir = os.path.basename(args.in_subject_dir)
 run_env = os.environ.copy()
 run_env["SUBJECTS_DIR"] = subjects_dir
 
@@ -82,9 +83,9 @@ for hemi in ['lh', 'rh']:
         # Resample LGI surfaces to fsaverage mesh
         cmd = [
             'mri_surf2surf',
-            '--srcsubject', f'{args.in_subject_dir}',
+            '--srcsubject', subject_dir,
             '--trgsubject', 'fsaverage',
-            '--hemi', f'{hemi}',
+            '--hemi', hemi,
             '--srcsurfval', f'{args.lgi_dir}/{hemi}.pial.lgi.map.{row.klist}.curv',
             '--src_type', 'curv',
             '--tval', f'{args.lgi_dir}/{hemi}.pial.lgi.fsaverage.{row.reference_kernel:04d}.mgh',
