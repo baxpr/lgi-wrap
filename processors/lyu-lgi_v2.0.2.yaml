@@ -25,7 +25,7 @@ inputs:
 
     scans:
       - name: scan_t1
-        types: T1W_3D_TFE_new
+        types: T1*,cs*
 
     assessors:
       - name: assr_fs
